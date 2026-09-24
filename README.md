@@ -1,5 +1,11 @@
 # Multi-Agent AI Support Bot
 
+🔗 **[Live Demo](https://multi-agent-support-bot.onrender.com)** · [GitHub](https://github.com/MOHAMMADSHADULLA/multi-agent-support-bot)
+
+> Note: hosted on Render's free tier, which sleeps after 15 min of inactivity — the first request may take 30-60 seconds to wake up.
+
+![Demo screenshot](docs/screenshots/demo.png)
+
 A customer-support chatbot for a travel-booking platform (TravelZone),
 built around a small team of cooperating agents instead of one monolithic
 prompt: a **Retrieval agent** grounds answers in a real knowledge base, a
@@ -36,22 +42,23 @@ flowchart TD
 
 ```
 app/
-  agents/
-    orchestrator.py       # routes each message to Support or Escalation
-    retrieval_agent.py     # TF-IDF search + confidence scoring
-    support_agent.py       # LLM call grounded in retrieved context
-    escalation_agent.py    # LLM tool-calling for tickets/order lookups
-  data/                    # knowledge base (markdown FAQs)
-  static/index.html        # demo chat widget (vanilla HTML/CSS/JS)
-  rag.py                   # chunking + TF-IDF retriever
-  tools.py                 # mock ticket + order-lookup tool implementations
-  llm_client.py             # unified OpenAI / Gemini / mock client
-  config.py                # env-driven settings
-  main.py                  # FastAPI app (/chat, /health, static widget)
-tests/                     # pytest suite covering RAG, agents, and API
-.github/workflows/ci.yml   # lint/test/build on every push
+agents/
+orchestrator.py # routes each message to Support or Escalation
+retrieval_agent.py # TF-IDF search + confidence scoring
+support_agent.py # LLM call grounded in retrieved context
+escalation_agent.py # LLM tool-calling for tickets/order lookups
+data/ # knowledge base (markdown FAQs)
+static/index.html # demo chat widget (vanilla HTML/CSS/JS)
+rag.py # chunking + TF-IDF retriever
+tools.py # mock ticket + order-lookup tool implementations
+llm_client.py # unified OpenAI / Gemini / mock client
+config.py # env-driven settings
+main.py # FastAPI app (/chat, /health, static widget)
+tests/ # pytest suite covering RAG, agents, and API
+.github/workflows/ci.yml # lint/test/build on every push
 Dockerfile
 ```
+
 
 ## Why TF-IDF instead of a hosted embeddings API
 
@@ -82,10 +89,10 @@ curl -X POST http://localhost:8000/chat \
 
 ### Using a real LLM
 
-Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY=...` (or `LLM_PROVIDER=gemini`
-and `GEMINI_API_KEY=...`) in `.env`. The mock provider (default) needs no
-key and is what CI runs against, so the pipeline is fully testable without
-paying for API calls.
+Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY=...` (or `LLM_PROVIDER=gemini`,
+`GEMINI_API_KEY=...`, and `GEMINI_MODEL=gemini-3.6-flash`) in `.env`. The
+mock provider (default) needs no key and is what CI runs against, so the
+pipeline is fully testable without paying for API calls.
 
 ## Running with Docker
 
@@ -108,7 +115,8 @@ the full orchestration routing logic, and the HTTP API.
 Any container host works since it's a single Dockerfile with no external
 dependencies beyond the LLM API:
 - **Render / Railway / Fly.io** — point at the Dockerfile, set
-  `LLM_PROVIDER` + API key as env vars, done.
+  `LLM_PROVIDER` + API key as env vars, done. (This project is currently
+  deployed on Render — see the live demo link above.)
 - **AWS** — push the image to ECR and run on ECS Fargate or App Runner;
   or run `docker build` directly on an EC2 instance behind an ALB.
 
