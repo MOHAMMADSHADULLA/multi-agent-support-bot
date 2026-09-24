@@ -4,8 +4,6 @@
 
 > Note: hosted on Render's free tier, which sleeps after 15 min of inactivity — the first request may take 30-60 seconds to wake up.
 
-![Demo screenshot](docs/screenshots/demo.png)
-
 A customer-support chatbot for a travel-booking platform (TravelZone),
 built around a small team of cooperating agents instead of one monolithic
 prompt: a **Retrieval agent** grounds answers in a real knowledge base, a
@@ -42,20 +40,20 @@ flowchart TD
 
 ```
 app/
-agents/
-orchestrator.py # routes each message to Support or Escalation
-retrieval_agent.py # TF-IDF search + confidence scoring
-support_agent.py # LLM call grounded in retrieved context
-escalation_agent.py # LLM tool-calling for tickets/order lookups
-data/ # knowledge base (markdown FAQs)
-static/index.html # demo chat widget (vanilla HTML/CSS/JS)
-rag.py # chunking + TF-IDF retriever
-tools.py # mock ticket + order-lookup tool implementations
-llm_client.py # unified OpenAI / Gemini / mock client
-config.py # env-driven settings
-main.py # FastAPI app (/chat, /health, static widget)
-tests/ # pytest suite covering RAG, agents, and API
-.github/workflows/ci.yml # lint/test/build on every push
+  agents/
+    orchestrator.py       # routes each message to Support or Escalation
+    retrieval_agent.py     # TF-IDF search + confidence scoring
+    support_agent.py       # LLM call grounded in retrieved context
+    escalation_agent.py    # LLM tool-calling for tickets/order lookups
+  data/                    # knowledge base (markdown FAQs)
+  static/index.html        # demo chat widget (vanilla HTML/CSS/JS)
+  rag.py                   # chunking + TF-IDF retriever
+  tools.py                 # mock ticket + order-lookup tool implementations
+  llm_client.py             # unified OpenAI / Gemini / mock client
+  config.py                # env-driven settings
+  main.py                  # FastAPI app (/chat, /health, static widget)
+tests/                     # pytest suite covering RAG, agents, and API
+.github/workflows/ci.yml   # lint/test/build on every push
 Dockerfile
 ```
 
