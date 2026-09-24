@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TravelZone Support</title>
+<style>
+  :root {
+    --bg: #12202B;
+    --panel: #1C2F3D;
+    --card: #223846;
+    --text: #EFEAE0;
+    --muted: #8FA6AE;
+    --accent-teal: #4FB8A6;
+    --accent-gold: #E3A857;
+    --border: #2E4756;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(79, 184, 166, 0.07), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(227, 168, 87, 0.06), transparent 40%);
+    font-family: var(--sans);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .pass {
+    width: 100%;
+    max-width: 480px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+
+  .stub {
+    padding: 20px 22px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .stub .route {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .stub h1 {
+    margin: 6px 0 0;
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .stub .provider {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .provider .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-teal);
+    margin-right: 6px;
+  }
+
+  .perforation {
+    position: relative;
+    border-top: 1px dashed var(--border);
+    margin: 0 22px;
+  }
+  .perforation::before, .perforation::after {
+    content: "";
+    position: absolute;
+    top: -8px;
+    width: 16px;
+    height: 16px;
+    background: var(--bg);
+    border-radius: 50%;
+  }
+  .perforation::before { left: -30px; }
+  .perforation::after { right: -30px; }
+
+  .log {
+    padding: 20px 22px;
+    height: 380px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 10px 13px;
+    border-radius: 3px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+
+  .msg.bot {
+    align-self: flex-start;
+    background: transparent;
+    border-left: 2px solid var(--accent-teal);
+    padding-left: 12px;
+  }
+
+  .msg.bot.escalation { border-left-color: var(--accent-gold); }
+
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .badge.support { color: var(--accent-teal); }
+  .badge.escalation { color: var(--accent-gold); }
+
+  .sources {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  form {
+    display: flex;
+    gap: 8px;
+    padding: 16px 22px 22px;
+    border-top: 1px solid var(--border);
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-teal);
+  }
+
+  button {
+    background: var(--accent-teal);
+    color: #0E1B23;
+    border: none;
+    border-radius: 3px;
+    padding: 0 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .hint {
+    padding: 0 22px 18px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="pass">
+  <div class="stub">
+    <div>
+      <div class="route">YOU &nbsp;&rarr;&nbsp; AGENT</div>
+      <h1>TravelZone Support</h1>
+    </div>
+    <div class="provider" id="provider-label"><span class="dot"></span>checking&hellip;</div>
+  </div>
+
+  <div class="perforation"></div>
+
+  <div class="log" id="log">
+    <div class="msg bot">
+      <span class="badge support">SUPPORT AGENT</span><br/>
+      Hi! Ask me about bookings, payments, refunds, or your account —
+      or type an order ID to check its status.
+    </div>
+  </div>
+
+  <form id="chat-form">
+    <input type="text" id="chat-input" placeholder="Type your question…" autocomplete="off" />
+    <button type="submit" id="send-btn">SEND</button>
+  </form>
+  <div class="hint">Try: "How do I cancel a booking?" · "Check order A1001" · "My payment failed twice"</div>
+</div>
+
+<script>
+  const log = document.getElementById('log');
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+  const providerLabel = document.getElementById('provider-label');
+
+  fetch('/health').then(r => r.json()).then(d => {
+    providerLabel.innerHTML = `<span class="dot"></span>${d.llm_provider} · online`;
+  }).catch(() => {
+    providerLabel.innerHTML = `<span class="dot" style="background:#c96b4c"></span>offline`;
+  });
+
+  function addMessage(text, sender, route, sources) {
+    const div = document.createElement('div');
+    div.className = `msg ${sender}` + (route === 'escalation' ? ' escalation' : '');
+    if (sender === 'bot') {
+      const badgeClass = route === 'escalation' ? 'escalation' : 'support';
+      const badgeText = route === 'escalation' ? 'ESCALATION AGENT' : 'SUPPORT AGENT';
+      div.innerHTML = `<span class="badge ${badgeClass}">${badgeText}</span><br/>${text}`;
+      if (sources && sources.length) {
+        const src = document.createElement('div');
+        src.className = 'sources';
+        src.textContent = 'Source: ' + sources.join(', ');
+        div.appendChild(src);
+      }
+    } else {
+      div.textContent = text;
+    }
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+
+    addMessage(message, 'user');
+    input.value = '';
+    sendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      if (!res.ok) throw new Error('Request failed');
+      const data = await res.json();
+      addMessage(data.reply, 'bot', data.route, data.sources);
+    } catch (err) {
+      addMessage('Something went wrong reaching the support bot. Please try again.', 'bot');
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  });
+</script>
+
+</body>
+</html>
