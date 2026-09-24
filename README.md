@@ -1,128 +1,577 @@
-# Multi-Agent AI Support Bot
+# 🤖 Multi-Agent AI Support Bot
 
-A customer-support chatbot for a travel-booking platform (TravelZone),
-built around a small team of cooperating agents instead of one monolithic
-prompt: a **Retrieval agent** grounds answers in a real knowledge base, a
-**Support agent** generates the reply, and an **Escalation agent** takes
-over — using real tool/function calling — when the knowledge base can't
-help, either filing a support ticket or looking up an order.
+A production-style multi-agent customer support chatbot built for a travel-booking platform, **TravelZone**.
 
-Built to be provider-agnostic: swap between **OpenAI** and **Google
-Gemini** with one environment variable, no code changes.
+The system uses four specialized agents to route customer requests, retrieve relevant knowledge, generate grounded responses, and handle requests that require escalation or tool usage.
 
-## Why this architecture
+---
 
-A single "answer everything" LLM call can't do RAG grounding, decide when
-it doesn't know something, *and* reliably call the right tool — it either
-hallucinates unclear answers or over-triggers tools. Splitting the work
-into agents with one job each makes every step inspectable and testable
-independently (see `tests/`), which is also just good engineering practice
-for anything going into production.
+## 🌐 Live Demo
+
+🚀 **Live Application:**  
+https://multi-agent-support-bot.onrender.com/
+
+> The application is deployed on Render's free tier and may sleep after inactivity. The first request after inactivity may take some time to start.
+
+---
+
+## ✨ Features
+
+- 🤖 Multi-agent AI architecture
+- 🎯 Intelligent request orchestration
+- 🔎 Retrieval-Augmented Generation (RAG)
+- 📚 Markdown-based knowledge base
+- 🧠 TF-IDF + cosine similarity retrieval
+- 💬 Context-grounded AI responses
+- 🛠️ Tool/function calling
+- 📦 Mock order-status lookup
+- 🎫 Mock support-ticket creation
+- 🔄 OpenAI / Google Gemini / Mock LLM providers
+- ⚡ FastAPI backend
+- 🌐 Lightweight web interface
+- 🧪 Automated Pytest test suite
+- 🐳 Docker support
+- 🔁 GitHub Actions CI
+- ☁️ Render deployment
+
+---
+
+# 🏗️ Architecture
 
 ```mermaid
 flowchart TD
-    U[User message] --> O[Orchestrator]
-    O --> R[Retrieval Agent<br/>TF-IDF search over KB]
-    R -->|confident match| S[Support Agent<br/>answers from context]
-    R -->|no confident match| E[Escalation Agent<br/>tool-calling]
-    E -->|order-related| T1[check_order_status]
-    E -->|everything else| T2[create_support_ticket]
-    S --> Reply[Reply to user]
-    T1 --> Reply
-    T2 --> Reply
+
+    A[👤 User Message] --> B[🎯 Orchestrator Agent]
+
+    B --> C[🔎 Retrieval Agent]
+
+    C -->|Confident Match| D[💬 Support Agent]
+
+    D --> E[✅ Response]
+
+    C -->|No Confident Match| F[🚨 Escalation Agent]
+
+    F -->|Order Request| G[📦 check_order_status]
+
+    F -->|Unsupported Issue| H[🎫 create_support_ticket]
+
+    G --> E
+    H --> E
 ```
 
-## Project layout
+---
 
+# 🤖 Multi-Agent System
+
+The application separates responsibilities across four agents.
+
+### 1. 🎯 Orchestrator Agent
+
+Coordinates the overall request flow.
+
+- Receives the user's message
+- Determines the appropriate workflow
+- Routes requests to the retrieval system
+- Connects retrieval, support, and escalation workflows
+
+### 2. 🔎 Retrieval Agent
+
+Searches the knowledge base for relevant information.
+
+**Technology:**
+
+- TF-IDF vectorization
+- Cosine similarity
+- Markdown knowledge base
+- Confidence scoring
+
+If a relevant match is found, the request is passed to the Support Agent.
+
+If no confident match is found, the request is passed to the Escalation Agent.
+
+### 3. 💬 Support Agent
+
+Generates responses using the user's question and retrieved knowledge-base context.
+
+This helps keep responses grounded in available documentation.
+
+### 4. 🚨 Escalation Agent
+
+Handles requests that cannot be confidently answered using the knowledge base.
+
+It can use tools such as:
+
+- `check_order_status`
+- `create_support_ticket`
+
+---
+
+# 🧠 RAG Pipeline
+
+The project uses a lightweight Retrieval-Augmented Generation pipeline.
+
+```text
+Knowledge Base
+      ↓
+Document Loading
+      ↓
+TF-IDF Vectorization
+      ↓
+User Query
+      ↓
+Cosine Similarity
+      ↓
+Relevant Context
+      ↓
+Support Agent
+      ↓
+Grounded Response
 ```
-app/
-  agents/
-    orchestrator.py       # routes each message to Support or Escalation
-    retrieval_agent.py     # TF-IDF search + confidence scoring
-    support_agent.py       # LLM call grounded in retrieved context
-    escalation_agent.py    # LLM tool-calling for tickets/order lookups
-  data/                    # knowledge base (markdown FAQs)
-  static/index.html        # demo chat widget (vanilla HTML/CSS/JS)
-  rag.py                   # chunking + TF-IDF retriever
-  tools.py                 # mock ticket + order-lookup tool implementations
-  llm_client.py             # unified OpenAI / Gemini / mock client
-  config.py                # env-driven settings
-  main.py                  # FastAPI app (/chat, /health, static widget)
-tests/                     # pytest suite covering RAG, agents, and API
-.github/workflows/ci.yml   # lint/test/build on every push
-Dockerfile
+
+### Why TF-IDF?
+
+TF-IDF was selected for this project because it provides:
+
+- Lightweight retrieval
+- Fast startup
+- No external embedding API
+- No vector database requirement
+- Deterministic results
+- Easy testing
+- Simple deployment
+
+The retrieval layer can later be upgraded to embedding-based search using technologies such as Chroma or pgvector.
+
+---
+
+# 🛠️ Tool Calling
+
+The Escalation Agent can invoke application tools based on the user's request.
+
+### `check_order_status`
+
+Used for order-related requests.
+
+Example:
+
+```text
+User:
+Check the status of order A1001.
+
+↓
+Escalation Agent
+↓
+check_order_status()
+↓
+Order Information
+↓
+Response
 ```
 
-## Why TF-IDF instead of a hosted embeddings API
+### `create_support_ticket`
 
-The retrieval layer uses scikit-learn TF-IDF + cosine similarity rather
-than OpenAI/Gemini embeddings or a vector database. That's a deliberate
-choice for a project this size: it needs zero API keys to run and test,
-starts instantly, and still exercises the real RAG pattern end to end
-(chunk → index → retrieve → ground the answer). `app/rag.py` is the only
-file that would need to change to swap in real embeddings + a vector
-store like Chroma or pgvector for a larger knowledge base.
+Used when an issue requires escalation.
 
-## Running locally
+Example:
+
+```text
+User:
+I have an issue that isn't covered in the knowledge base.
+
+↓
+Escalation Agent
+↓
+create_support_ticket()
+↓
+Ticket Information
+↓
+Response
+```
+
+> The current order lookup and ticket system use mock/in-memory implementations for demonstration and testing. They are not connected to real production systems.
+
+---
+
+# 💻 Tech Stack
+
+| Category | Technologies |
+|---|---|
+| Backend | Python, FastAPI, Pydantic, Uvicorn |
+| AI / ML | OpenAI, Google Gemini, scikit-learn |
+| Retrieval | TF-IDF, Cosine Similarity |
+| Frontend | HTML, CSS, JavaScript |
+| Testing | Pytest |
+| DevOps | Docker, GitHub Actions |
+| Deployment | Render |
+
+---
+
+# 📁 Project Structure
+
+```text
+multi-agent-support-bot/
+│
+├── app/
+│   ├── agents/
+│   │   ├── orchestrator.py
+│   │   ├── retrieval_agent.py
+│   │   ├── support_agent.py
+│   │   └── escalation_agent.py
+│   │
+│   ├── data/
+│   │   └── knowledge-base files
+│   │
+│   ├── static/
+│   │   └── index.html
+│   │
+│   ├── rag.py
+│   ├── tools.py
+│   ├── llm_client.py
+│   ├── config.py
+│   └── main.py
+│
+├── tests/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── Dockerfile
+├── requirements.txt
+├── .env.example
+└── README.md
+```
+
+---
+
+# 💬 Example Requests
+
+### Knowledge Base Request
+
+```text
+User:
+How do I cancel my booking?
+
+↓
+
+Orchestrator
+↓
+
+Retrieval Agent
+↓
+
+Relevant knowledge found
+
+↓
+
+Support Agent
+↓
+
+Grounded response
+```
+
+### Order Request
+
+```text
+User:
+Check order A1001.
+
+↓
+
+Orchestrator
+↓
+
+Retrieval Agent
+
+↓
+
+Escalation Agent
+
+↓
+
+check_order_status()
+
+↓
+
+Response
+```
+
+### Unsupported Request
+
+```text
+User:
+I have an issue that isn't covered in the FAQ.
+
+↓
+
+Orchestrator
+↓
+
+Retrieval Agent
+
+↓
+
+No confident match
+
+↓
+
+Escalation Agent
+
+↓
+
+create_support_ticket()
+
+↓
+
+Response
+```
+
+---
+
+# 🚀 Getting Started
+
+## 1. Clone the Repository
 
 ```bash
-python -m venv venv && source venv/bin/activate
+git clone https://github.com/MOHAMMADSHADULLA/multi-agent-support-bot.git
+cd multi-agent-support-bot
+```
+
+## 2. Create a Virtual Environment
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Linux / macOS
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+## 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
-cp .env.example .env          # defaults to LLM_PROVIDER=mock, no key needed
+```
+
+## 4. Configure Environment Variables
+
+Create a `.env` file using `.env.example`.
+
+For local development without an API key:
+
+```env
+LLM_PROVIDER=mock
+```
+
+For OpenAI:
+
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your_api_key
+```
+
+For Google Gemini:
+
+```env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_api_key
+GEMINI_MODEL=your_model_name
+```
+
+Use a model name supported by your configured API/account.
+
+## 5. Run the Application
+
+```bash
 uvicorn app.main:app --reload
 ```
 
-Open http://localhost:8000 for the chat widget, or call the API directly:
+Open:
 
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "How do I cancel a booking?"}'
+```text
+http://localhost:8000
 ```
 
-### Using a real LLM
+---
 
-Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY=...` (or `LLM_PROVIDER=gemini`
-and `GEMINI_API_KEY=...`) in `.env`. The mock provider (default) needs no
-key and is what CI runs against, so the pipeline is fully testable without
-paying for API calls.
+# 📚 API
 
-## Running with Docker
+FastAPI interactive documentation:
 
-```bash
-docker build -t support-bot .
-docker run -p 8000:8000 -e LLM_PROVIDER=mock support-bot
+```text
+http://localhost:8000/docs
 ```
 
-## Tests
+### Health Check
+
+```http
+GET /health
+```
+
+### Chat
+
+```http
+POST /chat
+```
+
+Example request:
+
+```json
+{
+  "message": "How do I cancel a booking?"
+}
+```
+
+---
+
+# 🐳 Docker
+
+## Build
+
+```bash
+docker build -t multi-agent-support-bot .
+```
+
+## Run
+
+```bash
+docker run -p 8000:8000 -e LLM_PROVIDER=mock multi-agent-support-bot
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+---
+
+# 🧪 Testing
+
+Run the automated test suite:
 
 ```bash
 pytest -v
 ```
 
-16 tests cover the retriever's relevance scoring, each agent in isolation,
-the full orchestration routing logic, and the HTTP API.
+Tests cover:
 
-## Deploying
+- Retrieval relevance
+- Retrieval confidence scoring
+- Individual agent behavior
+- Agent orchestration
+- API behavior
+- Tool execution
 
-Any container host works since it's a single Dockerfile with no external
-dependencies beyond the LLM API:
-- **Render / Railway / Fly.io** — point at the Dockerfile, set
-  `LLM_PROVIDER` + API key as env vars, done.
-- **AWS** — push the image to ECR and run on ECS Fargate or App Runner;
-  or run `docker build` directly on an EC2 instance behind an ALB.
+The project currently contains **16 automated tests**.
 
-## Example interactions
+---
 
-| Message | Route | What happens |
-|---|---|---|
-| "How do I cancel a booking?" | Support | Answered from `bookings.md`, cites source |
-| "Check order A1001" | Escalation → `check_order_status` | Looks up the mock order |
-| "My spaceship warranty is void" | Escalation → `create_support_ticket` | Files a ticket, returns a ticket ID |
+# 🔁 CI/CD
 
-## Possible extensions
+GitHub Actions automatically runs the test suite on repository changes.
 
-- Swap TF-IDF for OpenAI/Gemini embeddings + Chroma for a larger KB
-- Persist tickets/conversations to a real database instead of in-memory mocks
-- Add a streaming `/chat` endpoint (SSE) for token-by-token replies
-- Wire `create_support_ticket` to a real helpdesk API (Zendesk, Freshdesk)
+```text
+Git Push
+   ↓
+GitHub Actions
+   ↓
+Install Dependencies
+   ↓
+Run Tests
+   ↓
+Validation
+```
+
+---
+
+# ☁️ Deployment
+
+The application is currently deployed using **Render**.
+
+🚀 **Live Demo:**  
+https://multi-agent-support-bot.onrender.com/
+
+The Dockerized application can also be deployed to platforms such as:
+
+- Railway
+- Fly.io
+- AWS ECS
+- AWS Fargate
+- AWS App Runner
+
+---
+
+# ⚠️ Current Limitations
+
+This project is designed as a portfolio and demonstration application.
+
+Current limitations:
+
+- Order lookup uses mock/in-memory data
+- Support tickets use mock/in-memory data
+- Retrieval uses TF-IDF instead of semantic embeddings
+- No persistent conversation database
+- No production helpdesk integration
+- No real order-management integration
+- No authentication system
+- Render free-tier deployment may sleep after inactivity
+
+---
+
+# 🚀 Future Improvements
+
+Potential extensions include:
+
+- 🔹 Embedding-based semantic search
+- 🔹 Chroma or pgvector integration
+- 🔹 PostgreSQL conversation storage
+- 🔹 Persistent support tickets
+- 🔹 Real order-management integration
+- 🔹 Zendesk / Freshdesk integration
+- 🔹 Streaming AI responses
+- 🔹 User authentication and JWT
+- 🔹 Role-based access control
+- 🔹 Rate limiting
+- 🔹 Agent tracing and observability
+- 🔹 LLM usage monitoring
+
+---
+
+# 🎯 What This Project Demonstrates
+
+- Multi-agent AI architecture
+- Agent orchestration
+- Retrieval-Augmented Generation
+- Information retrieval
+- TF-IDF and cosine similarity
+- LLM integration
+- Tool/function calling
+- FastAPI API development
+- Modular software architecture
+- Automated testing
+- Docker containerization
+- GitHub Actions CI
+- Cloud deployment
+
+---
+
+# 🔗 Links
+
+**Live Demo:**  
+https://multi-agent-support-bot.onrender.com/
+
+**GitHub Repository:**  
+https://github.com/MOHAMMADSHADULLA/multi-agent-support-bot
+
+---
+
+# 📄 License
+
+This project is intended for educational, portfolio, and demonstration purposes.
